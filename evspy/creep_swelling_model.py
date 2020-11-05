@@ -266,6 +266,10 @@ def beta_nash(OCR,betamin,b0,a):
     b=np.clip(1/OCR,b0,1)
     mu = (np.pi/2)*((b-b0)/(1-b0))
     return np.nan_to_num(betamin+(1-betamin)*(np.sin(mu))**a)
+def ratio_Calphacinit(OCR,beta2):
+    return 2/((OCR)**beta2+1)
+def ratio_Calphasinit(OCR,m=0.99,b=-1.44):
+    return np.clip(np.clip(OCR-1,0.001,np.infty)**m*(10**b),1e-100,1e100)
 
 def C_S_CRS(Cc,Cr,sigmap,eratec0,CalphaNC,erateref=2e-4,Cc_reduction=2.3,Cc_f_OCR=False,erates0=-1,erate = 1,sigma0=265,sigmaf=160,b2=-5.5,m2=2.5,beta2=3,beta3=18,estart=1,m1=0.88,b1=-1.4,dtfactor=1):
     Cc0 = Cc
@@ -290,8 +294,8 @@ def C_S_CRS(Cc,Cr,sigmap,eratec0,CalphaNC,erateref=2e-4,Cc_reduction=2.3,Cc_f_OC
         erates[0]=erates0
     Calphahatc_real=np.zeros((dimt))
     Calphahats_real=np.zeros((dimt))
-    Calphahatc_real[0]=FDM.ratio_Calphacinit(sigp_ref[0]/sigma[0],beta2)*CalphaNC
-    Calphahats_real[0]=FDM.ratio_Calphasinit(sigp_ref[0]/sigma[0],m=m1,b=b1)*CalphaNC
+    Calphahatc_real[0]=ratio_Calphacinit(sigp_ref[0]/sigma[0],beta2)*CalphaNC
+    Calphahats_real[0]=ratio_Calphasinit(sigp_ref[0]/sigma[0],m=m1,b=b1)*CalphaNC
     t=0
     stop=True
     while stop & (t<dimt-2):
@@ -313,11 +317,12 @@ def C_S_CRS(Cc,Cr,sigmap,eratec0,CalphaNC,erateref=2e-4,Cc_reduction=2.3,Cc_f_OC
         sigmap = np.max([sigma[t],sigmap])
         sigp_ref[t]=sigp_ref[t-1]+sigp_ref[t-1]*(eratec[t]-erates[t])/(Cc-Cr)/0.434*dt
         
-        if sigmaf>sigma0:
-            Calphahatc_real[t]=CalphaNC*np.clip(FDM.ratio_Calphac_f_rate(eratec[t]/erateref,beta2,beta3),0.1,100)
-        else:
-            Calphahatc_real[t]=np.clip(FDM.ratio_Calphacinit(sigp_ref[t]/sigma[t],beta2),0.1,1)*CalphaNC   
-        Calphahats_real[t]=np.clip(FDM.ratio_Calphasinit(OCR[t],m=m1,b=b1),0.05,100)*CalphaNC
+        Calphahatc_real[t]=CalphaNC*np.clip(ratio_Calphac_f_rate(eratec[t]/erateref,beta2,beta3),0.1,100)
+        #if sigmaf>sigma0:
+        #    Calphahatc_real[t]=CalphaNC*np.clip(ratio_Calphac_f_rate(eratec[t]/erateref,beta2,beta3),0.1,100)
+        #else:
+        #    Calphahatc_real[t]=np.clip(FDM.ratio_Calphacinit(sigp_ref[t]/sigma[t],beta2),0.1,1)*CalphaNC   
+        Calphahats_real[t]=np.clip(ratio_Calphasinit(OCR[t],m=m1,b=b1),0.05,100)*CalphaNC
         
         if sigma0>sigmaf:
             stop = (sigma[t]>sigmaf)
@@ -326,3 +331,6 @@ def C_S_CRS(Cc,Cr,sigmap,eratec0,CalphaNC,erateref=2e-4,Cc_reduction=2.3,Cc_f_OC
         if Cc_f_OCR:
             Cc=Cc0-(Cc0-Cc0/Cc_reduction)/(1+np.exp(-10*(OCR[t]-1.2)))
     return {'time':time[:t],'sigma':sigma[:t],'e':e[:t],'erate_c':eratec[:t],'erate_e':erate_e[:t],'erate_s':erates[:t],'Calphahatc':Calphahatc_real[:t],'Calphahats':Calphahats_real[:t]}
+
+
+    
