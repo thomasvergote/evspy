@@ -8,4 +8,4 @@ More features are planned in the future:
 - fitting module using MCMC
 - documentation
 
-[logo]: https://github.com/thomasvergote/evspy/edit/master/example_fit.png "example fit"
+![logo](https://github.com/thomasvergote/evspy/edit/master/example_fit.png)
