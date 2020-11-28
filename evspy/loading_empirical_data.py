@@ -11,7 +11,7 @@ def h5load(store,tst):
     metadata = store.get_storer(tst).attrs.metadata
     return data, metadata
 
-def import_data(data_store='../data/Empirical_data_literature'):
+def import_data(data_store='../data/Empirical_data_literature.hdf'):
     readings={}; metadata_readings={}
     with pd.HDFStore(data_store) as hdf:
         test=hdf.keys()
@@ -21,6 +21,7 @@ def import_data(data_store='../data/Empirical_data_literature'):
     for i in metadata_readings.index:
         if '/AN' in i:
             metadata_readings.loc[i,'CalphaNC']=0.008
+    # OCRref according to duration of preload
     metadata_readings.loc['/AN-1.05_1.csv','OCR']=1.4578
     metadata_readings.loc['/AN-1.05_2.csv','OCR']=1.4526
     metadata_readings.loc['/AN-1.05_3.csv','OCR']=1.053
