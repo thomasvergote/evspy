@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='evspy',
-      version='0.0.1',
+      version='0.1.0',
       description='Modelling of creep and swelling during unloading',
       url='http://github.com/thomasvergote/evspy',
       author='Thomas Vergote',
