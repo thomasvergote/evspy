@@ -1,4 +1,4 @@
-# evspy - 1D elasto-viscoplastic modelling of soils
+# evspy - 1D elasto-viscoplastic modelling of soils with swelling
 A repository on elasto-viscous-swelling-plastic modelling of soils. 
 
 Currently includes the model used for http://doi.org/10.1680/jgeot.20.P.106. 
