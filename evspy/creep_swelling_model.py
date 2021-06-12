@@ -1,4 +1,4 @@
-import numpy as np; import pandas as pd;
+import numpy as np
 from scipy.optimize import fsolve
 from scipy.interpolate import griddata
 import matplotlib.pyplot as plt
@@ -333,4 +333,3 @@ def C_S_CRS(Cc,Cr,sigmap,eratec0,CalphaNC,erateref=2e-4,Cc_reduction=2.3,Cc_f_OC
     return {'time':time[:t],'sigma':sigma[:t],'e':e[:t],'erate_c':eratec[:t],'erate_e':erate_e[:t],'erate_s':erates[:t],'Calphahatc':Calphahatc_real[:t],'Calphahats':Calphahats_real[:t]}
 
 
-    
