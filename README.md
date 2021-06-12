@@ -1,6 +1,8 @@
 # evspy - 1D elasto-viscoplastic modelling of soils with swelling
 A repository on elasto-viscous-swelling-plastic modelling of soils. 
 
+![github-actions](https://github.com/thomasvergote/evspy/actions/workflows/python-test.yml/badge.svg)
+
 Currently includes the model used for http://doi.org/10.1680/jgeot.20.P.106. 
 
 More features are planned in the future:
