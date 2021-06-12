@@ -6,7 +6,7 @@ def readme():
         return f.read()
 
 setup(name='evspy',
-      version='0.1.2',
+      version='0.1.1',
       description='Modelling of consolidation with creep and swelling of soils',
       long_description=readme(),
       url='http://github.com/thomasvergote/evspy',
