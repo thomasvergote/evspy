@@ -106,3 +106,9 @@ def get_intersection(sigrangeUC,eUC,sigrangeNC,eNC,Cr):
     idx=idx.drop('target',axis=1).values
     idx=idx.astype('int')
     return sigrangeNC[idx[:,1]], eNC[idx[:,1]]
+
+def make_grid(df,sigrange,de=0.0002):
+    sigi=sigrange
+    ei=10**np.arange(np.log10(0.5),np.log10(3),de)
+    erateii=griddata((df['sigma'],df['e']),np.log10(df['erate']),xi=(sigi[None,:],ei[:,None]))
+    return sigi,ei,erateii
