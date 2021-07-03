@@ -6,6 +6,13 @@ from evspy.consolidation import Consol_Terzaghi_Uavg_vertical
 from evspy.viscous_swelling import swelling_law
 
 class distorted_isotache_model(base_isotache_model):
+    '''Distorted isotache model with decoupled model 
+
+    Parameters
+    ----------
+    base_isotache_model : class
+        Base class for isotache models
+    '''
     def initialize_decoupled(self,sigma0,e_init,erateinits):
         self.time_step={}
         self.time=np.array([0])
@@ -68,7 +75,7 @@ class distorted_isotache_model(base_isotache_model):
                     self.time_step[self.load.type[load_step]+str(load_step)]=self.time[t]
                     load_step+=1
                     if self.load.type[load_step]=='IL':
-                        time_u,U=Consol_Terzaghi_Uavg_vertical(self.load.cv[load_step]/3600/24/365,H,targettime=load.duration[load_step],dimt=1000,constant_dt_time=1e6,dtmax=1e5)
+                        time_u,U=Consol_Terzaghi_Uavg_vertical(self.load.cv[load_step]/3600/24/365,self.H,targettime=load.duration[load_step],dimt=1000,constant_dt_time=1e6,dtmax=1e5)
                         U=np.append(U[0],np.clip(U[1:]-U[:-1],0,1).cumsum())
                         self.time=np.append(self.time,self.time[-1]+0.01+time_u)
                         self.sigma=np.append(self.sigma,self.sigma[-1]+1/U[-1]*(self.load.load[load_step]-self.sigma[-1])*np.clip(U,0,1))
@@ -561,17 +568,17 @@ def distorted_isotaches_coupled(load,sigma0,H,erateref = 1e-5,dimt=8000,erateini
 if __name__ == '__main__':
     from evspy.loadsteps import LoadSteps
     load=LoadSteps()
-    load.add_load_step(1e5,5,1e-8,'CRS',cv=7)
-    load.add_load_step(1e5,15,1e-6,'CRS',cv=7)
-    load.add_load_step(1e5,30,1e-8,'CRS',cv=7)
-    load.add_load_step(1e5,70,1e-6,'CRS',cv=7)
-    load.add_load_step(1e5,100,1e-8,'CRS',cv=7)
-    load.add_load_step(1e5,200,1e-8,'IL',cv=7)
-    load.add_load_step(1e8,200,1e-8,'IL',cv=7)
-    load.add_load_step(1e8,20,-1e-6,'CRS',cv=7)
-    load.add_load_step(5e6,20,-1e-8,'IL',cv=7)
-    load.add_load_step(1e7,20,0,'CRS',cv=7)
-    model = distorted_isotache_model(load,sigma0=1,H=0.1)
+    load.add_load_step(1e5,5,1e-8,'IL',cv=7)
+    #load.add_load_step(1e5,15,1e-6,'CRS',cv=7)
+    #load.add_load_step(1e5,30,1e-8,'CRS',cv=7)
+    #load.add_load_step(1e5,70,1e-6,'CRS',cv=7)
+    #load.add_load_step(1e5,100,1e-8,'CRS',cv=7)
+    #load.add_load_step(1e5,200,1e-8,'IL',cv=7)
+    #load.add_load_step(1e8,200,1e-8,'IL',cv=7)
+    #load.add_load_step(1e8,20,-1e-6,'CRS',cv=7)
+    #load.add_load_step(5e6,20,-1e-8,'IL',cv=7)
+    #load.add_load_step(1e7,20,0,'CRS',cv=7)
+    model = distorted_isotache_model(load,sigma0=1,H=0.1,dimt=100)
     # Add a check to see if initial condition is reasonable (for instance not above reference line)
     model.initialize_decoupled(1,1,1e-10)
     model.run_iterations()
