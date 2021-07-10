@@ -11,7 +11,12 @@ More features are planned in the future:
 - fitting module using MCMC
 - documentation
 
+## Overview of models
+
+![example](/overview_of_models.png)
 ## Data
 Empirical data is added under `/data`. The files are HDF5 format and contain a range of stages with metadata (such as the OCR of the test stage). See the basic_examples to load the data. `loading_empirical_data.py` provides basic functions to load the data. 
 
 ![example](/example_fit.png)
+
+
