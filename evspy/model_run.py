@@ -1,4 +1,4 @@
-import evspy.creep_swelling_model as cs
+import evspy.single_stage_model.creep_swelling_model as cs
 
 class decoupled_cs_model:
     def __init__(self, Calphahatc, Calphahats,  erateci, eratesi, Cc, Cr, CalphaNC, OCR_initial,OCR_final, sigma0 = 100, sigmap = 100,

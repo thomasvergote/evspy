@@ -1,9 +1,11 @@
-from evspy.distorted_isotaches import base_isotache_model
 import numpy as np
+import matplotlib.pyplot as plt
 from pynverse import inversefunc
 import tqdm
+
 from evspy.consolidation import Consol_Terzaghi_Uavg_vertical
 from evspy.viscous_swelling import swelling_law
+from evspy.distorted_isotaches import base_isotache_model, create_isotache, make_contour
 
 class distorted_isotache_model(base_isotache_model):
     '''Distorted isotache model with decoupled model 
@@ -33,8 +35,7 @@ class distorted_isotache_model(base_isotache_model):
         self.Calphahats_real[0]=self.CalphaCc*self.Cc*self.b1*(self.OCR_real[0]-1)**self.m1
         
         #for t in tqdm.tqdm(range(1,dimt)):
-        
-    
+         
     def run_iterations(self):
         t = 0
         #start=False
@@ -75,7 +76,7 @@ class distorted_isotache_model(base_isotache_model):
                     self.time_step[self.load.type[load_step]+str(load_step)]=self.time[t]
                     load_step+=1
                     if self.load.type[load_step]=='IL':
-                        time_u,U=Consol_Terzaghi_Uavg_vertical(self.load.cv[load_step]/3600/24/365,self.H,targettime=load.duration[load_step],dimt=1000,constant_dt_time=1e6,dtmax=1e5)
+                        time_u,U=Consol_Terzaghi_Uavg_vertical(self.load.cv[load_step]/3600/24/365,self.H,targettime=self.load.duration[load_step],dimt=1000,constant_dt_time=1e6,dtmax=1e5)
                         U=np.append(U[0],np.clip(U[1:]-U[:-1],0,1).cumsum())
                         self.time=np.append(self.time,self.time[-1]+0.01+time_u)
                         self.sigma=np.append(self.sigma,self.sigma[-1]+1/U[-1]*(self.load.load[load_step]-self.sigma[-1])*np.clip(U,0,1))
@@ -158,6 +159,7 @@ class distorted_isotache_model(base_isotache_model):
             #    break
             #    print(sigma[t:t+1],e[t:t+1])
             #    sigpref[t]=sigpref[t-1]
+    
     def plotting(self):
         dforg,eUC_org,eUC0_org,eNC_org,sigrange_org,sigrangeNC=create_isotache(erateref = erateref, beta2 = beta2, beta3 = beta3,Cc = Cc,Cr = Cr,CalphaNC = CalphaNC,sigp=(sigpref[0]), e0=e0,isotache=isotache, power_law=power_law, ref_func=ref_func, dsig=dsig, beta_nash=beta_nash,param_nash=param_nash)
         dforg=dforg.reset_index()
@@ -568,7 +570,7 @@ def distorted_isotaches_coupled(load,sigma0,H,erateref = 1e-5,dimt=8000,erateini
 if __name__ == '__main__':
     from evspy.loadsteps import LoadSteps
     load=LoadSteps()
-    load.add_load_step(1e5,5,1e-8,'IL',cv=7)
+    load.add_load_step(1e5,5,1e-8,'CRS',cv=7)
     #load.add_load_step(1e5,15,1e-6,'CRS',cv=7)
     #load.add_load_step(1e5,30,1e-8,'CRS',cv=7)
     #load.add_load_step(1e5,70,1e-6,'CRS',cv=7)

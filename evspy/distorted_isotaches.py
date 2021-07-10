@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-#from scipy.interpolate import griddata
+from scipy.interpolate import griddata
 import matplotlib.pyplot as plt
 from pynverse import inversefunc
 #import lmfit
@@ -8,7 +8,7 @@ from scipy.special import lambertw
 
 
 from evspy.helper_functions import line_intersection, get_intersection # Refactoring needed for get_intersection?
-from evspy.creep_swelling_model import beta3_fit, beta2_fit, power_law, beta_nash
+from evspy.single_stage_model.creep_swelling_model import beta3_fit, beta2_fit, power_law, beta_nash
 # Strain rate relations
 
 def Calpha_from_erate(erate,eref=1e-5,Cc=0.2,Cr=0.2/5,Calpha=0.2*0.04,beta2=3,beta3=19):
@@ -169,7 +169,31 @@ def calc_pos_isotache(sigma,e,erateref = 1e-5,beta2 = 4,beta3 = 25,Cc = 0.2,Cr =
         lookup=np.clip(2/(inversefunc(log_mitsr_strain_rate,y_values=np.arange(-100,0,0.1),domain=0.00001,args=(beta2,Cc,Cr,CalphaNC))**beta2+1),0.0,1)*CalphaNC
     
         
+def make_contour(df,eUC,eUC0,eNC,sigrange,num=20,figsize=(8,5),vmin=-65,vmax=-5,colorbar=False):
+    sigi=sigrange
+    ei=10**np.arange(np.log10(0.5),np.log10(3),0.0005)
+    erateii=griddata((df['sigma'],df['e']),np.log10(df['erate']),xi=(sigi[None,:],ei[:,None]))
+    for i in range(len(ei)):
+        for j in range(len(sigi)):
+            if ei[i]>eUC[sigrange==sigrange[j]][0]:
+                erateii[i,j]=np.nan
     
+    plt.figure(figsize=figsize)
+    ax=plt.subplot(111)
+    #ax.annotate(r'$C_c$',xy=(10,1.75),xytext=(50,1.55))
+    #ax.annotate(r'reference',xy=(10,1.75),xytext=(15,1.73))
+    #ax.annotate(r'isotache',xy=(10,1.75),xytext=(22,1.69))
+    #ax.annotate(r'$C_r$',xy=(4,1.6),xytext=(4,1.7))
+    cs=plt.contour(sigi,ei,np.clip(erateii,vmin,vmax),num,vmax=vmax,vmin=vmin)
+    plt.semilogx(sigrange,eNC,'k--')
+    plt.plot(sigrange,eUC0,'k')
+    if colorbar:
+        plt.colorbar(label=r'$log_{10}(\dot{e}_c)$')
+    plt.ylim(1.4,1.8)
+    plt.xlim(2,100)
+    plt.tight_layout()
+    plt.xlabel("Stress, $\sigma_v'$ (kPa)"); plt.ylabel('Void ratio, $e$')#
+    return cs    
     
 
 from functools import wraps
