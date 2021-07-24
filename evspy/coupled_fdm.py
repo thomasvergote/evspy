@@ -20,10 +20,10 @@ class distorted_isotache_model(base_isotache_model):
         self.time=np.array([0])
         self.sigma=np.array([sigma0])
         self.e[:]=e_init
-        self.OCR_real[0]=self.sigpref[0]/self.sigma[0]
-        self.OCR[0]=self.sigpref[0]/self.sigma[0]
         self.initialize_reference_curve()
         self.sigpref[0] = self.get_sigpref(self.sigma[0:1],self.e[0:1])
+        self.OCR_real[0]=self.sigpref[0]/self.sigma[0]
+        self.OCR[0]=self.sigpref[0]/self.sigma[0]
         #print(sigma[0],e[0],beta2,beta3,Cc,Cr,CalphaNC,sigpref[0],e0,isotache,power_law,ref_func)
         self.eratec[0]=self.calc_pos_isotache(self.sigma[0],self.e[0],self.sigpref[0])
         self.erates[0]=erateinits
@@ -32,9 +32,42 @@ class distorted_isotache_model(base_isotache_model):
         self.Calphahatc_real=np.zeros((self.dimt))
         self.Calphahats_real=np.zeros((self.dimt))
         self.OCRrate=np.zeros((self.dimt))
-        self.Calphahats_real[0]=self.CalphaCc*self.Cc*self.b1*(self.OCR_real[0]-1)**self.m1
+        self.Calphahats_real[0]=self.CalphaCc*self.Cc**10**self.b1*(self.OCR[0]-1)**self.m1
         
         #for t in tqdm.tqdm(range(1,dimt)):
+
+    def initiate_new_load_step(self,load_step,t,running):
+        next_load_step=False
+        if self.load.type[load_step]=='IL':
+            if (t>=len(self.time)-1): #(time[t]>=load.end_time[load_step])|
+                #print(load_step)
+                next_load_step=True
+        elif self.load.type[load_step]=='CRS':
+            if self.load.rate[load_step]>0:
+                if self.sigma[t-1]>=self.load.load[load_step]:
+                    next_load_step=True
+            elif self.load.rate[load_step]<0:
+                if self.sigma[t-1]<=self.load.load[load_step]:
+                    next_load_step=True
+            else:
+                if (self.time[t]-self.time_step[self.load.type[load_step-1]+str(load_step-1)]>=self.load.duration[load_step]):
+                    next_load_step=True
+        if next_load_step:
+            reset=0
+            if len(self.load.type)>load_step+1:
+                #print('next step '+str(load_step))
+                self.time_step[self.load.type[load_step]+str(load_step)]=self.time[t]
+                load_step+=1
+                if self.load.type[load_step]=='IL':
+                    time_u,U=Consol_Terzaghi_Uavg_vertical(self.load.cv[load_step]/3600/24/365,self.H,targettime=self.load.duration[load_step],dimt=1000,constant_dt_time=1e6,dtmax=1e5)
+                    U=np.append(U[0],np.clip(U[1:]-U[:-1],0,1).cumsum())
+                    self.time=np.append(self.time,self.time[-1]+0.01+time_u)
+                    self.sigma=np.append(self.sigma,self.sigma[-1]+1/U[-1]*(self.load.load[load_step]-self.sigma[-1])*np.clip(U,0,1))
+                elif self.load.type[load_step]=='CRS':
+                    self.erate_crs = self.load.rate[load_step]
+            else:
+                running=False
+        return next_load_step, running, load_step
          
     def run_iterations(self):
         t = 0
@@ -54,53 +87,16 @@ class distorted_isotache_model(base_isotache_model):
         running=True
         reset=0
         while (running)&(t<self.dimt-1):
-            next_load_step=False
-            if self.load.type[load_step]=='IL':
-                if (t>=len(self.time)-1): #(time[t]>=load.end_time[load_step])|
-                    #print(load_step)
-                    next_load_step=True
-            elif self.load.type[load_step]=='CRS':
-                if self.load.rate[load_step]>0:
-                    if self.sigma[t-1]>=self.load.load[load_step]:
-                        next_load_step=True
-                elif self.load.rate[load_step]<0:
-                    if self.sigma[t-1]<=self.load.load[load_step]:
-                        next_load_step=True
-                else:
-                    if (self.time[t]-self.time_step[self.load.type[load_step-1]+str(load_step-1)]>=self.load.duration[load_step]):
-                        next_load_step=True
-            if next_load_step:
-                reset=0
-                if len(self.load.type)>load_step+1:
-                    #print('next step '+str(load_step))
-                    self.time_step[self.load.type[load_step]+str(load_step)]=self.time[t]
-                    load_step+=1
-                    if self.load.type[load_step]=='IL':
-                        time_u,U=Consol_Terzaghi_Uavg_vertical(self.load.cv[load_step]/3600/24/365,self.H,targettime=self.load.duration[load_step],dimt=1000,constant_dt_time=1e6,dtmax=1e5)
-                        U=np.append(U[0],np.clip(U[1:]-U[:-1],0,1).cumsum())
-                        self.time=np.append(self.time,self.time[-1]+0.01+time_u)
-                        self.sigma=np.append(self.sigma,self.sigma[-1]+1/U[-1]*(self.load.load[load_step]-self.sigma[-1])*np.clip(U,0,1))
-                    elif self.load.type[load_step]=='CRS':
-                        self.erate_crs = self.load.rate[load_step]
-                else:
-                    running=False
+            next_load_step, running, load_step=self.initiate_new_load_step(load_step,t,running)
             if running:
                 t+=1
-            
             if self.load.type[load_step]=='CRS':
                 if next_load_step:
                     dt = 1e-10
                 else:
                     dt = np.clip(np.abs(1/self.erate_e[t-1])/15000,0.001,np.min([dt*1.05,5e4]))
-                    #if (np.abs(eratec[t]/eratec[t-1])>1.2)|(np.abs(erates[t]/erates[t-1])>1.2):
-                    #    dt=dt/1.1
-                    #else:
-                    #    dt=dt*1.02
                 self.time=np.append(self.time,[self.time[t-1]+dt])
-                #print(str(t)+' - '+str(time[t-1])+' - '+str(len(time))+' - '+str(np.append(time,[time[t-1]+dt])[-1])+' - '+str(dt))
                 self.erate_e[t] = self.erate_crs+self.eratec[t-1]+self.erates[t-1]
-                #print(eratec[t-1])
-                #print(erate_e[t])
                 self.sigma=np.append(self.sigma,[self.sigma[t-1]+((10**(self.erate_e[t]*dt/self.Cr)-1)/dt)*self.sigma[t-1]*dt])
                 self.ee[t]=self.ee[t-1]-self.erate_e[t]*dt 
             elif self.load.type[load_step]=='IL':
@@ -114,18 +110,15 @@ class distorted_isotache_model(base_isotache_model):
             
             sigmarate=(self.sigma[t-1]-self.sigma[t-2])/dt
             self.erates[t],self.Calphahats_real[t-1],reset=swelling_law(self.erates[t-1],self.OCR[t],self.OCRrate[t],self.Calphahats_real[t-1],dt,self.CalphaCc*self.Cc,self.m1,self.b1,self.m2,self.b2,sigmarate,-self.erate_e[t],reset)
-            #if (sigma[t]<np.max(sigma[:t+1])/1.01)&(sigma[t]<sigma[t-1]):
-            #    if sigpref[t-1]>sigp_update[t-1]+5:
-            #        sigp_update[t]=sigpref[t-1]
-            #        printing=True
             
             # Distortion occurs only during swelling and not during relaxation
-            if (self.sigma[t]<self.sigma[t-1]/1.000001)&(self.sigma[t-1]<self.sigma[t-2]/1.000001)&(np.abs(self.e[t]-self.e[t-1])>0)&(np.abs(self.e[t-2]-self.e[t-1])>0):#&(np.abs(e[t]-e[t-1])>0.001):
+            if ((self.sigma[t]<self.sigma[t-1]/1.000001)
+                    &(self.sigma[t-1]<self.sigma[t-2]/1.000001)
+                    &(np.abs(self.e[t]-self.e[t-1])>0)
+                    &(np.abs(self.e[t-2]-self.e[t-1])>0)):
                 if (self.load.type[load_step]=='IL')&(np.round(self.load.load[load_step-1],1)==np.round(self.load.load[load_step],1)):
                     self.sigp_update[t]=self.sigp_update[t-1]
                 else:
-                    # ADJUST SIGP_UPDATE DOWNWARDS DURING SWELLING OR NOT
-                    #sigp_update[t]=sigpref[t-1]
                     self.sigp_update[t]=np.max(self.sigpref[self.sigpref>0])
             else:
                 self.sigp_update[t]=self.sigp_update[t-1]
@@ -139,34 +132,30 @@ class distorted_isotache_model(base_isotache_model):
                 print(dt)
                 print(self.Cr*0.434*(self.sigma[t]-self.sigma[t-1])/dt/np.average([self.sigma[t],self.sigma[t-1]]))
                 print(str(self.sigma[t-1])+' '+str(self.sigma[t]))
-                print(self.ee[t])
-                print(self.erate_e[t])
-                print(self.sigma[t],self.sigma[t-1])
-                print(self.sigma[t]-self.sigma[t-1])
                 print('failure')
-                #return time[:t],self.sigma[:t],e[:t],erate[:t],erate_e[:t],eratec[:t],erates[:t],Calphahats_real[:t],ee[:t],sigpref[:t],time_step,OCR[:t],OCR_real[:t],sigp_update[:t]
             if self.eratec[t]>1:
                 print((self.sigma[t],self.e[t],self.beta2, self.beta3,self.Cc,self.Cr,self.CalphaNC,self.sigp_update[t],self.e0))
-            #erates[t]=np.clip(erates[t-1]+erates[t-1]*erates[t-1]*1/(Calphahats_real[t-1]*0.434)*dt,-np.infty,0) #**2
             self.erate[t]=(self.e[t]-self.e[t-1])/dt#
             
-            # Minimum value of OCR here increased a bit to get the erate_s response right
             self.Calphahats_real[t]=self.CalphaCc*self.Cc*10**self.b1*(np.clip(self.OCR[t]-1,0.005,np.infty))**self.m1
-            
-            #try:
-            #    sigpref[t]=get_intersection(self.sigma[t:t+1],e[t:t+1],sigrangeNC,eNC,Cr)[0][0]
-            #except:
-            #    break
-            #    print(sigma[t:t+1],e[t:t+1])
-            #    sigpref[t]=sigpref[t-1]
+
+        self.sigma = self.sigma[:t]
+        self.e = self.e[:t]
+        self.erate = self.erate[:t]
+        self.Calphahats_real = self.Calphahats_real[:t]
+        self.sigpref = self.sigpref[:t]
+        self.eratec = self.eratec[:t]
     
     def plotting(self):
-        dforg,eUC_org,eUC0_org,eNC_org,sigrange_org,sigrangeNC=create_isotache(erateref = erateref, beta2 = beta2, beta3 = beta3,Cc = Cc,Cr = Cr,CalphaNC = CalphaNC,sigp=(sigpref[0]), e0=e0,isotache=isotache, power_law=power_law, ref_func=ref_func, dsig=dsig, beta_nash=beta_nash,param_nash=param_nash)
+        dforg,eUC_org,eUC0_org,eNC_org,sigrange_org,sigrangeNC=create_isotache(erateref = self.erateref, beta2 = self.beta2, 
+                                                                                beta3 = self.beta3,Cc = self.Cc,Cr = self.Cr,CalphaNC = self.CalphaNC,
+                                                                                sigp=(self.sigpref[0]), e0=self.e0,isotache=self.isotache, power_law=self.use_power_law, 
+                                                                                ref_func=self.ref_func, dsig=self.dsig, beta_nash=self.use_beta_nash,param_nash=self.param_nash)
         dforg=dforg.reset_index()
         cs=make_contour(dforg,eUC_org,eUC0_org,eNC_org,sigrange_org,sigrangeNC,num=20,figsize=(8,5),vmax=-3)
-        plt.plot(sigma[0],e[0],'o')
-        plt.plot(sigma[:t],e[:t],'-',lw=4)
-        plt.ylim(np.min(e[:t]),np.max(e[:t]))
+        plt.plot(self.sigma[0],self.e[0],'o')
+        plt.plot(self.sigma,self.e,'-',lw=4)
+        plt.ylim(np.min(self.e),np.max(self.e))
         plt.xlim(1,1000)
         #df,eUC,eUC0,eNC,sigrange,sigrangeNC=create_isotache(beta2 = beta2, beta3 = beta3,Cc = Cc,Cr = Cr,CalphaNC = CalphaNC,sigp=sigpref[t-1],e0=e0,isotache=isotache,power_law=power_law,ref_func=ref_func,dsig=0.05,beta_nash=beta_nash)
         #cs=make_contour(df,eUC,eUC0,eNC,sigrange,sigrangeNC,num=20,figsize=(8,5),vmax=-3)
@@ -177,11 +166,12 @@ class distorted_isotache_model(base_isotache_model):
     #print(load_step)
     #return time[:t],sigma[:t],e[:t],erate[:t],erate_e[:t],eratec[:t],erates[:t],Calphahats_real[:t],ee[:t],sigpref[:t],time_step,OCR[:t],OCR_real[:t],sigp_update[:t]
 
+
 def distorted_isotaches_coupled(load,sigma0,H,erateref = 1e-5,dimt=8000,erateinits=1e-10,Cc=0.5,Cr=0.5/5,CalphaNC=0.5*0.04,k1=-8,k2=2,kf='k1',Cv=7,isotache = False,power_law=False,ref_func='semilogx',beta2=3,beta3=16,e0=2.3,dsig=0.005,de=0.0002,plotting=True,m1=0.88,b1=-0.3,b2=-5.,m2=2.,beta_nash=False,param_nash=[0.023,0.33,13],Calpha_OCRref=True,dimx=20,OpenBottom=False,sig0=1,gamman=17,gammas=27,gammaw=10,strain_definition='e/(1+e)',kdep=True,largestrain=True):
     CalphaCc=CalphaNC/Cc
 
     # Use Cc instead of Cc2 and skip "flexible"
-    def consol_step(t,reset,Cc): #,e,k,z,ue,u,sigma,sigmarate,sigpref,eratec,erates,erate
+    def consol_step(t,reset,Cc):
         ##### CONSOLIDATION
         
         if strain_definition=='e/(1+e0)':

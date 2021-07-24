@@ -169,7 +169,7 @@ def calc_pos_isotache(sigma,e,erateref = 1e-5,beta2 = 4,beta3 = 25,Cc = 0.2,Cr =
         lookup=np.clip(2/(inversefunc(log_mitsr_strain_rate,y_values=np.arange(-100,0,0.1),domain=0.00001,args=(beta2,Cc,Cr,CalphaNC))**beta2+1),0.0,1)*CalphaNC
     
         
-def make_contour(df,eUC,eUC0,eNC,sigrange,num=20,figsize=(8,5),vmin=-65,vmax=-5,colorbar=False):
+def make_contour(df,eUC,eUC0,eNC,sigrange,sigrangeNC,num=20,figsize=(8,5),vmin=-65,vmax=-5,colorbar=False):
     sigi=sigrange
     ei=10**np.arange(np.log10(0.5),np.log10(3),0.0005)
     erateii=griddata((df['sigma'],df['e']),np.log10(df['erate']),xi=(sigi[None,:],ei[:,None]))
@@ -185,7 +185,7 @@ def make_contour(df,eUC,eUC0,eNC,sigrange,num=20,figsize=(8,5),vmin=-65,vmax=-5,
     #ax.annotate(r'isotache',xy=(10,1.75),xytext=(22,1.69))
     #ax.annotate(r'$C_r$',xy=(4,1.6),xytext=(4,1.7))
     cs=plt.contour(sigi,ei,np.clip(erateii,vmin,vmax),num,vmax=vmax,vmin=vmin)
-    plt.semilogx(sigrange,eNC,'k--')
+    plt.semilogx(sigrangeNC,eNC,'k--')
     plt.plot(sigrange,eUC0,'k')
     if colorbar:
         plt.colorbar(label=r'$log_{10}(\dot{e}_c)$')
