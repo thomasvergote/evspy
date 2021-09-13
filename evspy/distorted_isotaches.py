@@ -184,7 +184,7 @@ def make_contour(df,eUC,eUC0,eNC,sigrange,sigrangeNC,num=20,figsize=(8,5),vmin=-
     #ax.annotate(r'reference',xy=(10,1.75),xytext=(15,1.73))
     #ax.annotate(r'isotache',xy=(10,1.75),xytext=(22,1.69))
     #ax.annotate(r'$C_r$',xy=(4,1.6),xytext=(4,1.7))
-    cs=plt.contour(sigi,ei,np.clip(erateii,vmin,vmax),num,vmax=vmax,vmin=vmin)
+    cs=plt.contour(sigi,ei,np.clip(erateii,vmin,vmax),num,vmax=vmax,vmin=vmin,cmap='jet')
     plt.semilogx(sigrangeNC,eNC,'k--')
     plt.plot(sigrange,eUC0,'k')
     if colorbar:
