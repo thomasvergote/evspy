@@ -16,4 +16,4 @@ def test_decoupled_CS_model():
     OCR_final = 1.5
     model = decoupled_cs_model(Calphahatc, Calphahats,  erateci, eratesi, Cc,Cr,CalphaNC, OCR_initial,OCR_final,Cv=Cv,nonlinear_Calphahat=True,hypA=False,beta2=4,beta3=20)
     
-    #assert np.max(model.Surcharge2[('6.0_m',  '4.285714285714286_wks')]['Level'])==6
+    assert np.round(model.OCR[-1],2) == OCR_final
