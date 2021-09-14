@@ -4,8 +4,8 @@ A repository on elasto-viscous-swelling-plastic modelling of soils.
 ![github-actions](https://github.com/thomasvergote/evspy/actions/workflows/python-test.yml/badge.svg)
 
 Two models are incorporated:
-- a decoupled model to model and interpret laboratory test data on soil after unloading: http://doi.org/10.1680/jgeot.20.P.106. 
-- a coupled model that incorporates the features inferred from the decoupled model: http://dx.doi.org/10.1002/nag.3248
+- a single-stage, decoupled model to model and interpret laboratory test data on soil after unloading: http://doi.org/10.1680/jgeot.20.P.106. 
+- a multi-stage, coupled or decoupled model that incorporates the features inferred from the decoupled model: http://dx.doi.org/10.1002/nag.3248
 
 More features are planned in the future:
 - fitting module using MCMC
