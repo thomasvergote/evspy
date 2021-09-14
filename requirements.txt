@@ -2,3 +2,7 @@ numpy
 pandas
 scipy
 matplotlib
+lmfit
+pynverse
+tqdm
+tables
