@@ -1,11 +1,13 @@
 import numpy as np
 import pandas as pd
-from scipy.interpolate import griddata
+
 import matplotlib.pyplot as plt
 from pynverse import inversefunc
 import lmfit
+
+from scipy.interpolate import griddata
 from scipy.special import lambertw
-from scipy.optimize import minimize
+from scipy.optimize import minimize, curve_fit
 
 # Intersections
 
@@ -112,3 +114,23 @@ def make_grid(df,sigrange,de=0.0002):
     ei=10**np.arange(np.log10(0.5),np.log10(3),de)
     erateii=griddata((df['sigma'],df['e']),np.log10(df['erate']),xi=(sigi[None,:],ei[:,None]))
     return sigi,ei,erateii
+
+def linfit(x,a,b):
+    return a*x+b
+
+def semilogfit(x,a,b):
+    return a*np.log10(x)+b
+
+def loglogfit(x,a,b):
+    return 10**(a*np.log10(x)+b)
+
+def fit_Cc_Cr(xrange,yrange,function=semilogfit,label=r'$C_c$ = '):
+    xrange=xrange[(xrange>-1000)&(yrange>-1000)]
+    yrange=yrange[(xrange>-1000)&(yrange>-1000)]
+    popt,pcov = curve_fit(function,xrange,yrange)
+    plt.plot(10**np.arange(-1,3,0.1),function(10**np.arange(-1,3,0.1),popt[0],popt[1]),'k--',label=label+str(np.round(-popt[0],2)))
+    return -popt[0],popt[1]
+
+def get_sigref(sigma,e,Cc,Cr,e0):
+    X,Y=line_intersection(((np.log10(sigma),e),(5,e-Cr*np.log10(10**5/sigma))),((0,e0),(5,e0-Cc*5)))
+    return 10**X,Y

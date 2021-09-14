@@ -7,7 +7,7 @@ from pynverse import inversefunc
 from scipy.special import lambertw
 
 
-from evspy.helper_functions import line_intersection, get_intersection # Refactoring needed for get_intersection?
+from evspy.utils.helper_functions import line_intersection, get_intersection # Refactoring needed for get_intersection?
 from evspy.single_stage_model.creep_swelling_model import beta3_fit, beta2_fit, power_law, beta_nash
 # Strain rate relations
 
@@ -241,8 +241,11 @@ class base_isotache_model:
 
         self.CalphaCc = self.CalphaNC/self.Cc
 
-    def get_sigpref(self,sigma,e):
-        sigpref=get_intersection(sigma,e,self.sigrangeNC,self.eNC,self.Cr)[0][0]
+    def get_sigpref(self,sigma,e,sigpref,initiate=False):
+        if (self.ref_func =='semilogx')&(initiate==False):
+            sigpref = 10**(np.log10(sigpref[0])-(e[1]-e[0])/(self.Cc-self.Cr)-self.Cr/(self.Cc-self.Cr)*np.log10(sigma[1]/sigma[0]))
+        else:      
+            sigpref = get_intersection(sigma,e,self.sigrangeNC,self.eNC,self.Cr)[0][0]
         return sigpref
         
     def initialize_reference_curve(self):
