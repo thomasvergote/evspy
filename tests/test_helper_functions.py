@@ -1,4 +1,4 @@
-from evspy.helper_functions import semilogintersection, loglogintersection, line_intersection
+from evspy.utils.helper_functions import semilogintersection, loglogintersection, line_intersection
 import numpy as np
 
 def test_line_intersection():

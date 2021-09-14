@@ -1,7 +1,7 @@
 import datetime
 import pandas as pd
 import numpy as np
-from evspy.model_run import decoupled_cs_model
+from evspy.single_stage_model.model_run import decoupled_cs_model
 
 def test_decoupled_CS_model():
     Calphahatc = 0.0015

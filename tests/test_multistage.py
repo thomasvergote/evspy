@@ -1,5 +1,5 @@
-from evspy.loadsteps import LoadSteps
-from evspy.coupled_fdm import distorted_isotache_model
+from evspy.utils.loadsteps import LoadSteps
+from evspy.multi_stage_model.coupled_fdm import distorted_isotache_model
 import numpy as np
 
 def test_decoupled_consolidation_IL():
