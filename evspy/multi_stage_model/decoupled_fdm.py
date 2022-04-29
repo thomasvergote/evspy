@@ -68,7 +68,7 @@ class distorted_isotache_model(base_isotache_model):
                     time_u,U=Consol_Terzaghi_Uavg_vertical(self.load.cv[load_step]/3600/24/365,self.H,targettime=self.load.duration[load_step],dimt=1000,constant_dt_time=1e6,dtmax=1e5)
                     U=np.append(U[0],np.clip(U[1:]-U[:-1],0,1).cumsum())
                     self.time=np.append(self.time,self.time[-1]+0.01+time_u)
-                    self.sigma=np.append(self.sigma,self.sigma[-1]+1/U[-1]*(self.load.load[load_step]-self.sigma[-1])*np.clip(U,0,1))
+                    self.sigma=np.append(self.sigma,self.sigma[-1]+(self.load.load[load_step]-self.sigma[-1])*np.clip(U,0,1))
                 elif self.load.type[load_step]=='CRS':
                     self.erate_crs = self.load.rate[load_step]
                 self.time_step_start[self.load.type[load_step]+str(load_step)]=self.time[t]

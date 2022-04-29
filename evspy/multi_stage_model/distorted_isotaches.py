@@ -20,7 +20,7 @@ def Calpha_from_erate(erate,eref=1e-5,Cc=0.2,Cr=0.2/5,Calpha=0.2*0.04,beta2=3,be
         pass
     R=erate/eref
     Z=-2*beta2/K*np.log(R)+1
-    OCR_x=lambertw(np.exp(Z))**(1/beta2)
+    OCR_x=np.clip(lambertw(np.exp(Z)).real**(1/beta2),0,np.infty)
     return 2/(np.array([np.float(i) for i in OCR_x])**beta2+1)
 
 def mitsr_strain_rate(OCR,beta2,Cc,Cr,Calpha):
@@ -112,7 +112,7 @@ def create_isotache(erateref = 1e-5,beta2 = 4,beta3 = 25,Cc = 0.2,Cr = 0.2 /5,Ca
         dftemp['sigma']=sigrange
         dftemp['e']=eUC
         dftemp['erate']=eratei
-        df=df.append(dftemp)
+        df=pd.concat([df,dftemp])
     eUC = eUC0
     sigp = sigp0
     OCR = sigp / sigrange
@@ -161,7 +161,7 @@ def create_isotache(erateref = 1e-5,beta2 = 4,beta3 = 25,Cc = 0.2,Cr = 0.2 /5,Ca
         dftemp['sigma']=sigrange
         dftemp['e']=eUC
         dftemp['erate']=eratei
-        df=df.append(dftemp) 
+        df=pd.concat([df,dftemp])
     return df,eUC,eUC0,eNC,sigrange,sigrangeNC
 
 def calc_pos_isotache(sigma,e,erateref = 1e-5,beta2 = 4,beta3 = 25,Cc = 0.2,Cr = 0.2 /5,CalphaNC = 0.2 * 0.04,sigp=100.,e0=1.5,isotache=False,power_law=False,ref_func='semilogx', Calpha_OCRref=True,m=1,m0=-1.22,b0=-1.14,dsig=0.05,steps=300,beta_nash=False,param_nash=[0.02952926,0.02696060,9.03771812],lookup=[],beta2beta3=False):
