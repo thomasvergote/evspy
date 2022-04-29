@@ -10,7 +10,7 @@ def test_decoupled_consolidation_IL():
     model = distorted_isotache_model(load,sigma0=1,H=0.1,dimt=1000,e_init=1)
     model.initialize_decoupled()
     model.run_iterations()
-    assert model.sigma[-1] == 5
+    assert np.round(model.sigma[-1],1) == 5
 
 def test_decoupled_consolidation_CRS():
     load=LoadSteps()
