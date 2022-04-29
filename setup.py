@@ -6,7 +6,7 @@ def readme():
         return f.read()
 
 setup(name='evspy',
-      version='0.2.0',
+      version='0.2.1',
       description='Modelling of creep and swelling during unloading',
       long_description=readme(),
       url='http://github.com/thomasvergote/evspy',
